@@ -86,10 +86,8 @@ class GreeterWindow(Gtk.Window):
         for user in users:
             self.combo_user.append(user, user)
         if "user" in self.cache and self.cache["user"]:
-            # preselect the user stored in cache
             self.combo_user.set_active_id(self.cache["user"])
         else:
-            # or the 1st user
             self.combo_user.set_active_id(users[0])
         self.combo_user.connect("changed", self.on_user_changed)
 
