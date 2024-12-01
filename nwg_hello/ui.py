@@ -1,6 +1,7 @@
 import os
 import gi
 import sys
+import subprocess
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkLayerShell', '0.1')
@@ -91,6 +92,11 @@ class GreeterWindow(Gtk.Window):
             # or the 1st user
             self.combo_user.set_active_id(users[0])
         self.combo_user.connect("changed", self.on_user_changed)
+
+        # Add user full name and image
+        self.lbl_full_name = builder.get_object("lbl-full-name")
+        self.img_user = builder.get_object("img-user")
+        self.update_user_info(self.combo_user.get_active_id())
 
         lbl_password = builder.get_object("lbl-password")
         lbl_password.set_property("name", "form-label")
@@ -198,6 +204,7 @@ class GreeterWindow(Gtk.Window):
 
     def on_user_changed(self, combo):
         selected_user = self.combo_user.get_active_id()
+        self.update_user_info(selected_user)
         if "sessions" in self.cache and selected_user in self.cache["sessions"]:
             # preselect user session if available in cache
             self.combo_session.set_active_id(self.cache["sessions"][selected_user])
@@ -210,6 +217,20 @@ class GreeterWindow(Gtk.Window):
 
     def on_password_cb(self, widget):
         self.entry_password.set_visibility(widget.get_active())
+
+    def update_user_info(self, username):
+        try:
+            user_info = subprocess.check_output(['getent', 'passwd', username]).decode('utf-8').strip().split(':')
+            full_name = user_info[4].split(',')[0]
+            self.lbl_full_name.set_text(full_name)
+            icon_path = f"/var/lib/AccountsService/icons/{username}"
+            if os.path.isfile(icon_path):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_path, 100, 100)
+                self.img_user.set_from_pixbuf(pixbuf)
+            else:
+                self.img_user.set_from_icon_name("avatar-default", Gtk.IconSize.DIALOG)
+        except Exception as e:
+            eprint(f"Error updating user info: {e}", log=self.log)
 
     def login(self, btn):
         if not self.entry_password.get_text():
