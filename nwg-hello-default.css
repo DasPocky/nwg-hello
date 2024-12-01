@@ -63,3 +63,8 @@ button:hover {
 
 #login-button {
 }
+
+#img-user {
+    border-radius: 50%;
+    border: 2px solid #eee;
+}
